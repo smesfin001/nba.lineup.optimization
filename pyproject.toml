@@ -1,0 +1,27 @@
+[project]
+name = "lakers-lineup-optimization"
+version = "0.1.0"
+description = "Data-driven MVP for Lakers lineup optimization"
+requires-python = ">=3.8"
+dependencies = [
+    "fastapi==0.110.0",
+    "httpx==0.27.0",
+    "pydantic==2.6.4",
+    "sqlalchemy==2.0.29",
+    "uvicorn==0.29.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.1.1",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["lakers_optimizer"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

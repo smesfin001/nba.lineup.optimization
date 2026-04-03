@@ -1,0 +1,12 @@
+Metadata-Version: 2.1
+Name: lakers-lineup-optimization
+Version: 0.1.0
+Summary: Data-driven MVP for Lakers lineup optimization
+Requires-Python: >=3.8
+Requires-Dist: fastapi==0.110.0
+Requires-Dist: httpx==0.27.0
+Requires-Dist: pydantic==2.6.4
+Requires-Dist: sqlalchemy==2.0.29
+Requires-Dist: uvicorn==0.29.0
+Provides-Extra: dev
+Requires-Dist: pytest==8.1.1; extra == "dev"

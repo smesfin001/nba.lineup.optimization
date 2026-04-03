@@ -1,0 +1,46 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color: #f9f4ea;
+    background:
+      radial-gradient(circle at top, rgba(113, 78, 204, 0.4), transparent 26%),
+      linear-gradient(180deg, #231347 0%, #170d31 48%, #120c23 100%);
+    font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+    text-rendering: optimizeLegibility;
+    font-synthesis: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    @apply border-white/10;
+  }
+
+  body {
+    @apply min-h-screen bg-ink text-cream;
+    margin: 0;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  .hero-orb {
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.28) 42%, rgba(255, 255, 255, 0.08) 60%, transparent 72%),
+      linear-gradient(140deg, rgba(242, 201, 76, 0.55), rgba(127, 100, 234, 0.55));
+  }
+}
