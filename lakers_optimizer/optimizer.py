@@ -113,14 +113,20 @@ class LineupOptimizer:
 
     def _merge_constraints(self, parsed_intent: ParsedIntent, request: OptimizeLineupRequest) -> ParsedIntent:
         merged = parsed_intent.model_copy(deep=True)
-        if request.constraints.must_include:
-            merged.constraints.must_include = sorted(
-                set(merged.constraints.must_include).union(request.constraints.must_include)
-            )
-        if request.constraints.must_exclude:
-            merged.constraints.must_exclude = sorted(
-                set(merged.constraints.must_exclude).union(request.constraints.must_exclude)
-            )
+        include_ids: set[int] = set(merged.constraints.must_include)
+        exclude_ids: set[int] = set(merged.constraints.must_exclude)
+        request_include_ids = set(request.constraints.must_include)
+        request_exclude_ids = set(request.constraints.must_exclude)
+
+        if request_include_ids:
+            include_ids |= request_include_ids
+            exclude_ids -= request_include_ids
+        if request_exclude_ids:
+            exclude_ids |= request_exclude_ids
+            include_ids -= request_exclude_ids
+
+        merged.constraints.must_include = sorted(include_ids)
+        merged.constraints.must_exclude = sorted(exclude_ids)
         for field_name in ("max_non_shooters", "min_size_score", "min_trust"):
             value = getattr(request.constraints, field_name)
             if value is not None:
@@ -147,14 +153,13 @@ class LineupOptimizer:
     ) -> List[LineupInsightResponse]:
         metric_scores = {
             "Defense": component_scores["defense"],
-            "Spacing": component_scores["spacing"],
             "Shooting": component_scores["shooting"],
             "Size": component_scores["size"],
             "Playmaking": component_scores["playmaking"],
         }
         top_metric = max(metric_scores.items(), key=lambda item: item[1])
         low_metric = min(metric_scores.items(), key=lambda item: item[1])
-        spacing_players = sum(1 for player in players if (player.three_pct or 0.0) >= 0.35)
+        shooting_players = sum(1 for player in players if (player.three_pct or 0.0) >= 0.35)
         insights = [
             LineupInsightResponse(
                 label="Top strength",
@@ -162,9 +167,9 @@ class LineupOptimizer:
                 tone="positive",
             ),
             LineupInsightResponse(
-                label="Floor balance",
-                value="{} of 5 players clear the spacing threshold.".format(spacing_players),
-                tone="positive" if spacing_players >= 3 else "neutral",
+                label="Shooting balance",
+                value="{} of 5 players clear the shooting threshold.".format(shooting_players),
+                tone="positive" if shooting_players >= 3 else "neutral",
             ),
             LineupInsightResponse(
                 label="Rotation trust",

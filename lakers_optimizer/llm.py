@@ -4,7 +4,10 @@ import json
 import re
 from typing import Any, Dict, List, Optional
 
-import httpx
+try:
+    import httpx
+except ImportError:  # pragma: no cover - offline environments
+    httpx = None
 
 from lakers_optimizer.config import get_settings
 from lakers_optimizer.schemas import ParsedIntent, normalize_intent_payload
@@ -21,7 +24,9 @@ class OpenAIQueryClient:
             payload = self._responses_api_request(
                 instructions=(
                     "Convert a basketball lineup query into JSON with keys "
-                    "'weights' and 'constraints'. Use only defense, spacing, shooting, size, playmaking weights. "
+                    "'weights' and 'constraints'. Use only defense, shooting, size, playmaking weights. "
+                    "Treat spacing and floor-balance requests as strong shooting intent. "
+                    "Treat passing requests as strong playmaking intent. "
                     "If the query names a player from the provided roster context, include that player's id in "
                     "constraints.must_include unless the query explicitly excludes them."
                 ),
@@ -46,6 +51,8 @@ class OpenAIQueryClient:
         return self._fallback_explanation(query, lineup_payload)
 
     def _responses_api_request(self, instructions: str, input_text: str) -> Dict[str, Any]:
+        if httpx is None:
+            raise RuntimeError("httpx is unavailable in this environment.")
         response = httpx.post(
             "{}/responses".format(self.settings.openai_base_url.rstrip("/")),
             headers={
@@ -70,22 +77,31 @@ class OpenAIQueryClient:
     def _fallback_parse_query(self, query: str, context: Optional[Dict[str, Any]] = None) -> ParsedIntent:
         lowered = query.lower()
         weights = {
-            "defense": 0.2,
-            "spacing": 0.2,
-            "shooting": 0.2,
+            "defense": 0.25,
+            "shooting": 0.25,
             "size": 0.2,
-            "playmaking": 0.2,
+            "playmaking": 0.3,
         }
         keyword_map = {
-            "defense": ["defense", "guard", "stop", "contain", "switch"],
-            "spacing": ["spacing", "shoot", "floor"],
-            "shooting": ["shooting", "three", "3pt"],
-            "size": ["size", "rebound", "big", "physical"],
-            "playmaking": ["playmaking", "ball handling", "assist", "creation"],
+            "defense": [
+                (0.25, ["defense", "guard", "stop", "contain", "switch"]),
+            ],
+            "shooting": [
+                (0.45, ["spacing", "floor spacing", "floor", "five out", "five-out", "surround", "room", "keep space"]),
+                (0.25, ["shooting", "shoot", "three", "3pt", "3-point"]),
+            ],
+            "size": [
+                (0.25, ["size", "rebound", "big", "physical"]),
+            ],
+            "playmaking": [
+                (0.45, ["passing", "ball movement", "connective", "assist", "creation"]),
+                (0.25, ["playmaking", "ball handling", "handler", "organize"]),
+            ],
         }
-        for metric, keywords in keyword_map.items():
-            if any(keyword in lowered for keyword in keywords):
-                weights[metric] += 0.25
+        for metric, keyword_groups in keyword_map.items():
+            for boost, keywords in keyword_groups:
+                if any(keyword in lowered for keyword in keywords):
+                    weights[metric] += boost
         constraints: Dict[str, Any] = {}
         max_non_shooters = re.search(r"max\s+(\d+)\s+non[- ]shooters", lowered)
         if max_non_shooters:

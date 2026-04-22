@@ -95,7 +95,7 @@ class LineupRepository:
                 player_4_id=player_ids[3],
                 player_5_id=player_ids[4],
                 shooting_score=payload["shooting_score"],
-                spacing_score=payload["spacing_score"],
+                spacing_score=payload.get("spacing_score", payload["shooting_score"]),
                 defense_score=payload["defense_score"],
                 size_score=payload["size_score"],
                 playmaking_score=payload["playmaking_score"],

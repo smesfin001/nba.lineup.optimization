@@ -8,12 +8,11 @@ except ImportError:  # pragma: no cover - fallback for offline/test environments
     from ._pydantic_fallback import BaseModel, Field, model_validator
 
 
-METRIC_KEYS = ("defense", "spacing", "shooting", "size", "playmaking")
+METRIC_KEYS = ("defense", "shooting", "size", "playmaking")
 
 
 class IntentWeights(BaseModel):
     defense: float = 0.0
-    spacing: float = 0.0
     shooting: float = 0.0
     size: float = 0.0
     playmaking: float = 0.0
@@ -110,12 +109,18 @@ class IngestionSummary(BaseModel):
 
 def normalize_intent_payload(payload: Optional[Dict[str, Any]]) -> ParsedIntent:
     payload = payload or {}
-    weights = payload.get("weights") or {}
+    raw_weights = dict(payload.get("weights") or {})
+    spacing_weight = float(raw_weights.pop("spacing", 0.0) or 0.0)
+    passing_weight = float(raw_weights.pop("passing", 0.0) or 0.0)
+    if spacing_weight:
+        raw_weights["shooting"] = float(raw_weights.get("shooting", 0.0) or 0.0) + spacing_weight
+    if passing_weight:
+        raw_weights["playmaking"] = float(raw_weights.get("playmaking", 0.0) or 0.0) + passing_weight
     constraints = payload.get("constraints") or {}
-    normalized = {key: float(weights.get(key, 0.0) or 0.0) for key in METRIC_KEYS}
+    normalized = {key: float(raw_weights.get(key, 0.0) or 0.0) for key in METRIC_KEYS}
     total = sum(max(value, 0.0) for value in normalized.values())
     if total <= 0:
-        normalized = {"defense": 0.25, "spacing": 0.25, "shooting": 0.2, "size": 0.15, "playmaking": 0.15}
+        normalized = {"defense": 0.3, "shooting": 0.3, "size": 0.15, "playmaking": 0.25}
     else:
         normalized = {key: max(value, 0.0) / total for key, value in normalized.items()}
     return ParsedIntent(weights=IntentWeights(**normalized), constraints=QueryConstraints(**constraints))

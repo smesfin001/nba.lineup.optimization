@@ -10,7 +10,7 @@ from lakers_optimizer.scoring import (
     satisfies_constraints,
     score_lineup,
 )
-from lakers_optimizer.schemas import QueryConstraints
+from lakers_optimizer.schemas import QueryConstraints, normalize_intent_payload
 
 
 def build_player(player_id: int, three_pct: float, ast_pct: float, def_rating: float, height: int) -> Player:
@@ -45,8 +45,8 @@ def test_compute_lineup_features_and_trust_score() -> None:
 
     assert round(features["shooting_score"], 3) == 0.35
     assert round(features["size_score"], 1) == 80.0
-    assert round(compute_player_rotation_score(players[0]), 4) == 0.9015
-    assert round(compute_lineup_rotation_score(players), 4) == 0.9015
+    assert round(compute_player_rotation_score(players[0]), 4) == 0.8081
+    assert round(compute_lineup_rotation_score(players), 4) == 0.8081
     assert compute_trust_score(240) == 1.0
     assert compute_trust_score(100) == 0.5
 
@@ -60,7 +60,7 @@ def test_score_lineup_and_constraints() -> None:
         player_4_id=4,
         player_5_id=5,
         shooting_score=0.35,
-        spacing_score=0.21,
+        spacing_score=0.35,
         defense_score=0.009,
         size_score=80.0,
         playmaking_score=16.0,
@@ -81,12 +81,12 @@ def test_score_lineup_and_constraints() -> None:
     ]
     scores = score_lineup(
         lineup,
-        {"defense": 0.4, "spacing": 0.2, "shooting": 0.2, "size": 0.1, "playmaking": 0.1},
+        {"defense": 0.4, "shooting": 0.4, "size": 0.1, "playmaking": 0.1},
     )
 
-    assert round(scores["weighted_score"], 4) == 0.568
+    assert round(scores["weighted_score"], 4) == 0.596
     assert round(scores["historical_score"], 4) == 0.5833
-    assert round(scores["final_score"], 4) == 0.5845
+    assert round(scores["final_score"], 4) == 0.5915
     assert satisfies_constraints(
         lineup,
         players,
@@ -98,3 +98,11 @@ def test_score_lineup_and_constraints() -> None:
 
 def test_canonicalize_lineup() -> None:
     assert canonicalize_lineup([5, 1, 3, 2, 4]) == (1, 2, 3, 4, 5)
+
+
+def test_normalize_intent_payload_maps_spacing_and_passing_aliases() -> None:
+    parsed = normalize_intent_payload({"weights": {"spacing": 2.0, "passing": 1.0, "defense": 1.0}})
+
+    assert parsed.weights.shooting == 0.5
+    assert parsed.weights.playmaking == 0.25
+    assert parsed.weights.defense == 0.25

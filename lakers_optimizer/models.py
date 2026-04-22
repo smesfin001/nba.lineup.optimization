@@ -62,7 +62,7 @@ class Lineup(Base):
     player_4_id = Column(Integer, nullable=False)
     player_5_id = Column(Integer, nullable=False)
     shooting_score = Column(Float, nullable=False)
-    spacing_score = Column(Float, nullable=False)
+    spacing_score = Column(Float, nullable=False, default=0.0)
     defense_score = Column(Float, nullable=False)
     size_score = Column(Float, nullable=False)
     playmaking_score = Column(Float, nullable=False)

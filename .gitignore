@@ -1,3 +1,5 @@
-node_modules
 __pycache__
-
+*.egg-info
+.venv
+.pytest_cache
+lakers_optimizer.db

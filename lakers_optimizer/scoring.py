@@ -48,12 +48,9 @@ def compute_lineup_features(players: List[Player]) -> Dict[str, float]:
     def_ratings = [_value_or_default(player.def_rating, DEFAULT_DEF_RATING) for player in players]
     heights = [_value_or_default(player.height_inches, DEFAULT_HEIGHT) for player in players]
     shooting_score = mean(three_pcts)
-    spacers = len([value for value in three_pcts if value >= 0.35])
-    spacing_score = shooting_score * (spacers / 5.0)
     defense_score = mean([1.0 / rating for rating in def_ratings])
     return {
         "shooting_score": shooting_score,
-        "spacing_score": spacing_score,
         "defense_score": defense_score,
         "size_score": mean(heights),
         "playmaking_score": mean(ast_pcts),
@@ -86,7 +83,6 @@ class RankedLineup:
 def score_lineup(lineup: Lineup, weights: Dict[str, float]) -> Dict[str, float]:
     raw_metrics = {
         "defense": lineup.defense_score,
-        "spacing": lineup.spacing_score,
         "shooting": lineup.shooting_score,
         "size": lineup.size_score,
         "playmaking": lineup.playmaking_score,
@@ -94,7 +90,6 @@ def score_lineup(lineup: Lineup, weights: Dict[str, float]) -> Dict[str, float]:
     }
     normalized_metrics = {
         "defense": clamp(lineup.defense_score * 100.0),
-        "spacing": clamp(lineup.spacing_score),
         "shooting": clamp(lineup.shooting_score),
         "size": clamp(lineup.size_score / 100.0),
         "playmaking": clamp(lineup.playmaking_score / 100.0),
