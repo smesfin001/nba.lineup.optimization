@@ -34,32 +34,6 @@ python3 -m lakers_optimizer.cli optimize --query "Need defense and shooting" --m
 pytest
 ```
 
-
-If you also want a clean frontend run:
-
-```bash
-cd /Users/sammesfin/Lakers/nba.lineup.optimization/frontend
-npm install
-npm run dev
-```
-
-Frontend terminal:
-
-```bash
-cd /Users/sammesfin/Lakers/nba.lineup.optimization
-source "$HOME/.nvm/nvm.sh"
-nvm use 20
-cd frontend
-npm install
-npm run dev
-```
-
-Open:
-
-- `http://127.0.0.1:5173`
-- `http://127.0.0.1:8000/docs`
-
-
 ## Environment
 
 - `LAKERS_DB_URL` defaults to `sqlite:///./lakers_optimizer.db`
